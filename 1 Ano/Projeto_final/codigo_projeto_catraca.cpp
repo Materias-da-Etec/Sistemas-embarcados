@@ -10,36 +10,40 @@
 #define led_verde 
 #define pinoTrigger 5
 #define echo 18
-#define D5 11
-#define D6 12
-#define D4 10
-#define RS 9
-#define E 16
-#define D7 15
+#define D5 7
+#define D6 15
+#define D4 6
+#define RS 8
+#define E 9
+#define D7 16
 #define buzzer 48
 #define pino_DHT 42
-#define R_ledRGB 38
-#define G_ledRGB 40
-#define B_ledRGB 41
+#define R_ledRGB 35
+#define G_ledRGB 36
+#define B_ledRGB 37
 #include <DHT.h>
 #include <Arduino.h>
 #include <LiquidCrystal.h>
+#include <vector>
+using namespace std;
+
 LiquidCrystal lcd(RS,E,D4,D5,D6,D7);
 DHT sensor_dht(pino_DHT,DHT11);
 
+class Display{
+    public:
 
+    void Tela_padrao(float temp, float umi){
+        lcd.setCursor(0,0);
+        lcd.print("Celsius: ");
+        lcd.print(temp);
+        lcd.setCursor(0,1);
+        lcd.print("Umidade: ");
+        lcd.print(umi);
 
-void Tela_padrao(float temp, float umi) 
-{
-    lcd.setCursor(0,0);
-    lcd.print("Celsius: ");
-    lcd.print(temp);
-    lcd.setCursor(0,1);
-    lcd.print("Umidade: ");
-    lcd.print(umi);
+    }
 
-}
-void Saudacao_inicial(bool saudacao){
+    void Saudacao_inicial(bool saudacao){
     if(saudacao){
         lcd.setCursor(3,0);
         lcd.print("Seja bem");
@@ -54,6 +58,10 @@ void Saudacao_inicial(bool saudacao){
     
     
 }
+};
+
+
+
 
 float Iniciar_ultra(){
     digitalWrite(pinoTrigger,LOW);
@@ -70,7 +78,8 @@ float Iniciar_ultra(){
 }
 
 bool iniciarMatriz=false;
-
+Display display_lcd;
+vector<vector<int>> MatrizVagas(2, vector<int>(16,0));
 void setup() {
   
   pinMode(button_aceitar,INPUT);
@@ -90,23 +99,26 @@ void setup() {
 }
 
 void loop() {
+    
     float h_temp = sensor_dht.readHumidity();
     float t_temp = sensor_dht.readTemperature();
     float distancia = Iniciar_ultra();
     if (distancia>0 && distancia<50 && iniciarMatriz==false){
         lcd.clear();
-        Saudacao_inicial(true);
+        display_lcd.Saudacao_inicial(true);
         delay(3000);
         lcd.clear();
-        Saudacao_inicial(false);
+        display_lcd.Saudacao_inicial(false);
         delay(1500);
         iniciarMatriz=true;
+        lcd.clear();
+        delay(100);
 
         
         
     }else{
         if(!isnan(t_temp)&& !isnan(h_temp)){
-            Tela_padrao(t_temp,h_temp);    
+            display_lcd.Tela_padrao(t_temp,h_temp);    
         }else{
             lcd.clear();
         }
