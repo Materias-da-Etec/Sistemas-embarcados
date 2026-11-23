@@ -32,6 +32,20 @@ DHT sensor_dht(pino_DHT,DHT11);
 
 class Display{
     public:
+    void MostrarVagas(vector<vector<int>>vagas){
+        char ascii='A';
+        for(int r=0; r<vagas.size(); r++){
+            for(int c=0; c<vagas[r].size(); c++){
+                if(c%2==0){
+                    lcd.setCursor(c,r);
+                    lcd.write(ascii);
+                    if(ascii<'Z' && (ascii-15)!='A'){
+                        ascii++;
+                    }
+                }
+            }
+        }
+    }
 
     void Tela_padrao(float temp, float umi){
         lcd.setCursor(0,0);
@@ -103,7 +117,10 @@ void loop() {
     float h_temp = sensor_dht.readHumidity();
     float t_temp = sensor_dht.readTemperature();
     float distancia = Iniciar_ultra();
-    if (distancia>0 && distancia<50 && iniciarMatriz==false){
+    if(iniciarMatriz){
+	display_lcd.MostrarVagas(MatrizVagas);
+    }
+    else if (distancia>0 && distancia<50 && iniciarMatriz==false){
         lcd.clear();
         display_lcd.Saudacao_inicial(true);
         delay(3000);
