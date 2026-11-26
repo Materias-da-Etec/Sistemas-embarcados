@@ -64,9 +64,15 @@ class Display{
         }
     }
 
-    
+    bool SelecionarVagas(){
+        String click = VerificarClick(button_aceitar);
+        if(click=="aceitar"){
+            lcd.setCursor(vaga_atual.first,vaga_atual.second);
+            lcd.print("x");
+        }
+    }
 
-    bool SelecionarVaga(){
+    bool SelecionarCatalogo(){
         String click= VerificarClick(button_aceitar);
         if(click=="aceitar"){
             lcd.clear();
@@ -104,18 +110,22 @@ class Display{
     if(clique == "direita"){
         vaga_atual.first += 2;
         letra_atual+=1;
+        tone(buzzer,400,10);
     }
     else if(clique == "esquerda"){
         vaga_atual.first -= 2;
         letra_atual-=1;
+        tone(buzzer,400,10);
     }
     else if(clique == "cima"){
         vaga_atual.second -= 1;
         letra_atual=letra_atual-8;
+        tone(buzzer,400,10);
     }
     else if(clique == "baixo"){
         vaga_atual.second += 1;
         letra_atual=letra_atual+8;
+        tone(buzzer,400,10);
     }
     }
 
@@ -232,6 +242,7 @@ void setup() {
   lcd.begin(16,2);
 }
 void loop() {
+
     float h_temp = sensor_dht.readHumidity();
     float t_temp = sensor_dht.readTemperature();
     float distancia = Iniciar_ultra();
@@ -269,7 +280,7 @@ void loop() {
         case instrucao:
 
             
-            if(display_lcd.SelecionarVaga()){
+            if(display_lcd.SelecionarCatalogo()){
                 lcd.clear();
                 estado_atual=vagas;
             }else{
@@ -280,6 +291,9 @@ void loop() {
             break;
         case vagas:
             display_lcd.MostrarVagas(MatrizVagas);
+            display_lcd.MoverCatalogo();
+            display_lcd.SelecionarVagas();
+            
             break;
 
     }
