@@ -32,8 +32,8 @@ DHT sensor_dht(pino_DHT,DHT11);
 
 class Display{
     pair<int,int> vaga_atual={0,0};
-    bool ultimo_estado[4] = {LOW, LOW, LOW, LOW};
-    unsigned long ultimo_tempo[4] = {0, 0, 0, 0};
+    bool ultimo_estado[5] = {LOW, LOW, LOW, LOW, LOW};
+    unsigned long ultimo_tempo[5] = {0, 0, 0, 0, 0};
     char letra_atual='A';
     const unsigned long tempo = 50;
     public:
@@ -53,10 +53,27 @@ class Display{
         }
     }
 
+    
+
+    bool SelecionarVaga(){
+        String click= VerificarClick(button_aceitar);
+        if(click=="aceitar"){
+            lcd.clear();
+            String text="escolhido:";
+            text+=letra_atual;
+            lcd.setCursor(0,0);
+            lcd.print("Catalogo");
+            lcd.setCursor(0,1);
+            lcd.print(text);
+            delay(2000);
+            return true;
+        }
+        return false;
+    }
+
     void MoverCatalogo(){
 
     String clique = "";
-
     if(vaga_atual.first < 14){
         clique = VerificarClick(button_right);
     }
@@ -89,7 +106,6 @@ class Display{
         vaga_atual.second += 1;
         letra_atual=letra_atual+8;
     }
-    getLetraAtual();
     }
 
     String VerificarClick(int botao){
@@ -101,38 +117,34 @@ class Display{
         case button_left: indice = 1; break;
         case button_top: indice = 2; break;
         case button_bottom: indice = 3; break;
+        case button_aceitar: indice=4; break;
         default: return "";
     }
 
-    bool estado_atual = digitalRead(botao);
+    bool click_atual = digitalRead(botao);
 
-    if(estado_atual == HIGH && ultimo_estado[indice] == LOW){
+    if(click_atual == HIGH && ultimo_estado[indice] == LOW){
 
         if(millis() - ultimo_tempo[indice] >= tempo){
 
             ultimo_tempo[indice] = millis();
-            ultimo_estado[indice] = estado_atual;
+            ultimo_estado[indice] = click_atual;
 
             switch(indice){
                 case 0: return "direita";
                 case 1: return "esquerda";
                 case 2: return "cima";
                 case 3: return "baixo";
+                case 4: return "aceitar";
             }
         }
     }
 
-    ultimo_estado[indice] = estado_atual;
+    ultimo_estado[indice] = click_atual;
 
     return "";
 }
 
-     void getLetraAtual(){
-        lcd.setCursor(vaga_atual.first,vaga_atual.second);
-        lcd.print(letra_atual);
-        
-
-     }
 
     void Tela_padrao(float temp, float umi){
         lcd.setCursor(0,0);
@@ -161,7 +173,15 @@ class Display{
 }
 };
 
+enum Estados{
+    tela_padrao,
+    saudacao,
+    instrucao,
+    catalogo,
+    vaga_selecionada
+};
 
+Estados estado_atual=tela_padrao;
 
 
 float Iniciar_ultra(){
@@ -203,29 +223,49 @@ void loop() {
     float h_temp = sensor_dht.readHumidity();
     float t_temp = sensor_dht.readTemperature();
     float distancia = Iniciar_ultra();
-    if(iniciarMatriz){
-        display_lcd.MoverCatalogo();
-    }
-    else if (distancia>0 && distancia<50 && iniciarMatriz==false){
-        lcd.clear();
-        display_lcd.Saudacao_inicial(true);
-        delay(3000);
-        lcd.clear();
-        display_lcd.Saudacao_inicial(false);
-        delay(1500);
-        iniciarMatriz=true;
-        lcd.clear();
-        display_lcd.MostrarCatalogo(MatrizVagas);
+        switch(estado_atual){
 
-        
-        
-    }else{
-        if(!isnan(t_temp)&& !isnan(h_temp)){
-            display_lcd.Tela_padrao(t_temp,h_temp);    
-        }else{
+        case tela_padrao:
+
+            if(!isnan(t_temp) && !isnan(h_temp)){
+                display_lcd.Tela_padrao(t_temp,h_temp);
+            }
+
+            if(distancia > 0 && distancia < 50){
+
+                lcd.clear();
+
+                display_lcd.Saudacao_inicial(true);
+                delay(1000);
+                estado_atual = saudacao;
+            }
+
+            break;
+
+
+        case saudacao:
+
             lcd.clear();
-        }
-        
+
+            display_lcd.Saudacao_inicial(false);
+            delay(1000);
+            estado_atual = instrucao;
+            lcd.clear();
+            break;
+
+
+        case instrucao:
+
+            
+            if(display_lcd.SelecionarVaga()){
+                lcd.clear();
+            }else{
+                 display_lcd.MostrarCatalogo(MatrizVagas);
+                display_lcd.MoverCatalogo();
+            }
+
+            break;
+
     }
     
 }
