@@ -31,8 +31,14 @@ LiquidCrystal lcd(RS,E,D4,D5,D6,D7);
 DHT sensor_dht(pino_DHT,DHT11);
 
 class Display{
+    pair<int,int> vaga_atual={0,0};
+    bool ultimo_estado[4] = {LOW, LOW, LOW, LOW};
+    unsigned long ultimo_tempo[4] = {0, 0, 0, 0};
+    char letra_atual='A';
+    const unsigned long tempo = 50;
     public:
-    void MostrarVagas(vector<vector<int>>vagas){
+    
+    void MostrarCatalogo(vector<vector<int>>vagas){
         char ascii='A';
         for(int r=0; r<vagas.size(); r++){
             for(int c=0; c<vagas[r].size(); c++){
@@ -46,6 +52,87 @@ class Display{
             }
         }
     }
+
+    void MoverCatalogo(){
+
+    String clique = "";
+
+    if(vaga_atual.first < 14){
+        clique = VerificarClick(button_right);
+    }
+
+    if(clique == "" && vaga_atual.first > 0){
+        clique = VerificarClick(button_left);
+    }
+
+    if(clique == "" && vaga_atual.second == 1){
+        clique = VerificarClick(button_top);
+    }
+
+    if(clique == "" && vaga_atual.second == 0){
+        clique = VerificarClick(button_bottom);
+    }
+
+    if(clique == "direita"){
+        vaga_atual.first += 2;
+        letra_atual+=1;
+    }
+    else if(clique == "esquerda"){
+        vaga_atual.first -= 2;
+        letra_atual-=1;
+    }
+    else if(clique == "cima"){
+        vaga_atual.second -= 1;
+        letra_atual=letra_atual-8;
+    }
+    else if(clique == "baixo"){
+        vaga_atual.second += 1;
+        letra_atual=letra_atual+8;
+    }
+    getLetraAtual();
+    }
+
+    String VerificarClick(int botao){
+
+    int indice;
+
+    switch(botao){
+        case button_right: indice = 0; break;
+        case button_left: indice = 1; break;
+        case button_top: indice = 2; break;
+        case button_bottom: indice = 3; break;
+        default: return "";
+    }
+
+    bool estado_atual = digitalRead(botao);
+
+    if(estado_atual == HIGH && ultimo_estado[indice] == LOW){
+
+        if(millis() - ultimo_tempo[indice] >= tempo){
+
+            ultimo_tempo[indice] = millis();
+            ultimo_estado[indice] = estado_atual;
+
+            switch(indice){
+                case 0: return "direita";
+                case 1: return "esquerda";
+                case 2: return "cima";
+                case 3: return "baixo";
+            }
+        }
+    }
+
+    ultimo_estado[indice] = estado_atual;
+
+    return "";
+}
+
+     void getLetraAtual(){
+        lcd.setCursor(vaga_atual.first,vaga_atual.second);
+        lcd.print(letra_atual);
+        
+
+     }
 
     void Tela_padrao(float temp, float umi){
         lcd.setCursor(0,0);
@@ -94,6 +181,7 @@ float Iniciar_ultra(){
 bool iniciarMatriz=false;
 Display display_lcd;
 vector<vector<int>> MatrizVagas(2, vector<int>(16,0));
+
 void setup() {
   
   pinMode(button_aceitar,INPUT);
@@ -111,14 +199,12 @@ void setup() {
   sensor_dht.begin();
   lcd.begin(16,2);
 }
-
 void loop() {
-    
     float h_temp = sensor_dht.readHumidity();
     float t_temp = sensor_dht.readTemperature();
     float distancia = Iniciar_ultra();
     if(iniciarMatriz){
-	display_lcd.MostrarVagas(MatrizVagas);
+        display_lcd.MoverCatalogo();
     }
     else if (distancia>0 && distancia<50 && iniciarMatriz==false){
         lcd.clear();
@@ -129,7 +215,7 @@ void loop() {
         delay(1500);
         iniciarMatriz=true;
         lcd.clear();
-        delay(100);
+        display_lcd.MostrarCatalogo(MatrizVagas);
 
         
         
