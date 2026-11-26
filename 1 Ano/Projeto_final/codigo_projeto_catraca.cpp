@@ -53,6 +53,17 @@ class Display{
         }
     }
 
+    void MostrarVagas(vector<vector<int>>vagas){
+        for(int r=0; r<vagas.size(); r++){
+            for(int c=0; c<vagas[r].size(); c++){
+                if(c%2==0){
+                    lcd.setCursor(c,r);
+                    lcd.write("o");
+                }
+            }
+        }
+    }
+
     
 
     bool SelecionarVaga(){
@@ -178,7 +189,8 @@ enum Estados{
     saudacao,
     instrucao,
     catalogo,
-    vaga_selecionada
+    vaga_selecionada,
+    vagas
 };
 
 Estados estado_atual=tela_padrao;
@@ -259,11 +271,15 @@ void loop() {
             
             if(display_lcd.SelecionarVaga()){
                 lcd.clear();
+                estado_atual=vagas;
             }else{
                  display_lcd.MostrarCatalogo(MatrizVagas);
                 display_lcd.MoverCatalogo();
             }
 
+            break;
+        case vagas:
+            display_lcd.MostrarVagas(MatrizVagas);
             break;
 
     }
