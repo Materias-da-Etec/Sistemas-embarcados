@@ -25,6 +25,7 @@
 #include <Arduino.h>
 #include <LiquidCrystal.h>
 #include <vector>
+#include <string>;
 using namespace std;
 
 LiquidCrystal lcd(RS,E,D4,D5,D6,D7);
@@ -53,23 +54,47 @@ class Display{
         }
     }
 
+    void SaudacaoFinal(){
+        lcd.setCursor(0,0);
+        lcd.print("Tenha um");
+        lcd.setCursor(0,1);
+        lcd.print("otimo passeio");
+    }
+
     void MostrarVagas(vector<vector<int>>vagas){
         for(int r=0; r<vagas.size(); r++){
             for(int c=0; c<vagas[r].size(); c++){
                 if(c%2==0){
                     lcd.setCursor(c,r);
-                    lcd.write("o");
+                    if(vagas[r][c]==0){
+                        lcd.print('o');
+                    }else{
+                        lcd.print('x');
+                    }
                 }
             }
         }
     }
+    void VerificarEscolha(){
+        String text="A vaga:";
+        text+=letra_atual;
+        text+=String(vaga_atual.second);
+        Serial.print(letra_atual);
+        lcd.setCursor(0,0);
+        lcd.print("Deseja mesmo");
+        lcd.setCursor(0,1);
+        lcd.print(text);
 
-    bool SelecionarVagas(){
+        
+    }
+
+    bool SelecionarVagas(vector<vector<int>> &vagas){
         String click = VerificarClick(button_aceitar);
         if(click=="aceitar"){
-            lcd.setCursor(vaga_atual.first,vaga_atual.second);
-            lcd.print("x");
+            vagas[vaga_atual.second][vaga_atual.first]=1;
+            return true;
         }
+        return false;
     }
 
     bool SelecionarCatalogo(){
@@ -82,10 +107,77 @@ class Display{
             lcd.print("Catalogo");
             lcd.setCursor(0,1);
             lcd.print(text);
-            delay(2000);
             return true;
         }
         return false;
+    }
+    void MoverOpcao(){
+        String clique="";
+        if(clique == "" && vaga_atual.second == 1){
+            clique = VerificarClick(button_top);
+        }
+
+        if(clique == "" && vaga_atual.second == 0){
+            clique = VerificarClick(button_bottom);
+        }
+        else if(clique == "cima"){
+            vaga_atual.second -= 1;
+            tone(buzzer,400,10);
+        }
+        else if(clique == "baixo"){
+            vaga_atual.second += 1;
+            tone(buzzer,400,10);
+        }
+    }
+
+    bool MostrarOpcao(){
+        String click=VerificarClick(button_aceitar);
+        lcd.setCursor(0,0);
+        lcd.print("Sim");
+        lcd.setCursor(0,1);
+        lcd.print("Nao");
+        if(click=="aceitar"){
+            return true;
+        }
+        return false;
+        
+    }
+
+    void MoverVaga(){
+        String clique = "";
+    if(vaga_atual.first < 14){
+        clique = VerificarClick(button_right);
+    }
+
+    if(clique == "" && vaga_atual.first > 0){
+        clique = VerificarClick(button_left);
+    }
+
+    if(clique == "" && vaga_atual.second == 1){
+        clique = VerificarClick(button_top);
+    }
+
+    if(clique == "" && vaga_atual.second == 0){
+        clique = VerificarClick(button_bottom);
+    }
+
+    if(clique == "direita"){
+        vaga_atual.first += 2;
+        tone(buzzer,400,10);
+    }
+    else if(clique == "esquerda"){
+        vaga_atual.first -= 2;
+        tone(buzzer,400,10);
+    }
+    else if(clique == "cima"){
+        vaga_atual.second -= 1;
+        tone(buzzer,400,10);
+    }
+    else if(clique == "baixo"){
+        vaga_atual.second += 1;
+        tone(buzzer,400,10);
+    }
+    
     }
 
     void MoverCatalogo(){
@@ -200,7 +292,8 @@ enum Estados{
     instrucao,
     catalogo,
     vaga_selecionada,
-    vagas
+    vagas,
+    verificar_escolha
 };
 
 Estados estado_atual=tela_padrao;
@@ -291,10 +384,27 @@ void loop() {
             break;
         case vagas:
             display_lcd.MostrarVagas(MatrizVagas);
-            display_lcd.MoverCatalogo();
-            display_lcd.SelecionarVagas();
+            display_lcd.MoverVaga();
+            if(display_lcd.SelecionarVagas(MatrizVagas)){
+                estado_atual=verificar_escolha;
+                lcd.clear();
+                display_lcd.VerificarEscolha();
+                delay(3000);
+                lcd.clear();
+            }
+            break;
+        case verificar_escolha:
+            if(display_lcd.MostrarOpcao()){
+                estado_atual=tela_padrao;
+                display_lcd.SaudacaoFinal();
+                delay(2500);
+            }else{
+                display_lcd.MoverOpcao();
+            }
+            
             
             break;
+
 
     }
     
