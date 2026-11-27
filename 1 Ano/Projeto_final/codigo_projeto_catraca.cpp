@@ -39,19 +39,21 @@ class Display{
     const unsigned long tempo = 50;
     public:
     
-    void MostrarCatalogo(vector<vector<int>>vagas){
+    void MostrarCatalogo(vector<vector<vector<int>>>vagas){
         char ascii='A';
-        for(int r=0; r<vagas.size(); r++){
-            for(int c=0; c<vagas[r].size(); c++){
+            for(int r=0; r<vagas[0].size(); r++){
+            for(int c=0; c<vagas[0][r].size(); c++){
                 if(c%2==0){
                     lcd.setCursor(c,r);
                     lcd.write(ascii);
-                    if(ascii<'Z' && (ascii-15)!='A'){
+                    if(ascii<'P'){
                         ascii++;
                     }
                 }
             }
+        
         }
+        
     }
 
     void SaudacaoFinal(){
@@ -61,25 +63,32 @@ class Display{
         lcd.print("otimo passeio");
     }
 
-    void MostrarVagas(vector<vector<int>>vagas){
-        for(int r=0; r<vagas.size(); r++){
-            for(int c=0; c<vagas[r].size(); c++){
+    void MostrarVagas(vector<vector<vector<int>>>vagas){
+            for(int r=0; r<vagas[letra_atual-'A'].size(); r++){
+            for(int c=0; c<vagas[letra_atual-'A'][r].size(); c++){
                 if(c%2==0){
                     lcd.setCursor(c,r);
-                    if(vagas[r][c]==0){
+                    if(vagas[letra_atual-'A'][r][c]==0){
                         lcd.print('o');
                     }else{
                         lcd.print('x');
                     }
                 }
             }
+        
         }
+        
     }
     void VerificarEscolha(){
         String text="A vaga:";
         text+=letra_atual;
-        text+=String(vaga_atual.second);
-        Serial.print(letra_atual);
+        if(vaga_atual.second==0){
+            text+=String(vaga_atual.first/2+1);
+        }else{
+            text+=String(vaga_atual.first/2+9);
+        }
+        
+        Serial.print(text);
         lcd.setCursor(0,0);
         lcd.print("Deseja mesmo");
         lcd.setCursor(0,1);
@@ -88,13 +97,21 @@ class Display{
         
     }
 
-    bool SelecionarVagas(vector<vector<int>> &vagas){
+    bool SelecionarVagas(vector<vector<vector<int>>> &vagas){
         String click = VerificarClick(button_aceitar);
         if(click=="aceitar"){
-            vagas[vaga_atual.second][vaga_atual.first]=1;
-            return true;
-        }
+                vagas[letra_atual-'A'][vaga_atual.second][vaga_atual.first]=1;
+                return true;
+            }
+            
+        
         return false;
+    }
+    void ResetarVaga(bool letra){
+        vaga_atual={0,0};
+        if(letra){
+        letra_atual='A';
+        }
     }
 
     bool SelecionarCatalogo(){
@@ -115,18 +132,18 @@ class Display{
         String clique="";
         if(clique == "" && vaga_atual.second == 1){
             clique = VerificarClick(button_top);
+            if(clique == "cima"){
+            vaga_atual.second -= 1;
+            tone(buzzer,400,10);
+        }
         }
 
         if(clique == "" && vaga_atual.second == 0){
             clique = VerificarClick(button_bottom);
-        }
-        else if(clique == "cima"){
-            vaga_atual.second -= 1;
-            tone(buzzer,400,10);
-        }
-        else if(clique == "baixo"){
+            if(clique == "baixo"){
             vaga_atual.second += 1;
             tone(buzzer,400,10);
+        }
         }
     }
 
@@ -136,7 +153,7 @@ class Display{
         lcd.print("Sim");
         lcd.setCursor(0,1);
         lcd.print("Nao");
-        if(click=="aceitar"){
+        if(click=="aceitar" && vaga_atual.second==0){
             return true;
         }
         return false;
@@ -147,37 +164,36 @@ class Display{
         String clique = "";
     if(vaga_atual.first < 14){
         clique = VerificarClick(button_right);
+        if(clique == "direita"){
+        vaga_atual.first += 2;
+        tone(buzzer,400,10);
+    }
     }
 
     if(clique == "" && vaga_atual.first > 0){
         clique = VerificarClick(button_left);
+        if(clique == "esquerda"){
+        vaga_atual.first -= 2;
+        tone(buzzer,400,10);
+        }
     }
+
 
     if(clique == "" && vaga_atual.second == 1){
         clique = VerificarClick(button_top);
+        if(clique == "cima"){
+        vaga_atual.second -= 1;
+        tone(buzzer,400,10);
+    }
     }
 
     if(clique == "" && vaga_atual.second == 0){
         clique = VerificarClick(button_bottom);
-    }
-
-    if(clique == "direita"){
-        vaga_atual.first += 2;
-        tone(buzzer,400,10);
-    }
-    else if(clique == "esquerda"){
-        vaga_atual.first -= 2;
-        tone(buzzer,400,10);
-    }
-    else if(clique == "cima"){
-        vaga_atual.second -= 1;
-        tone(buzzer,400,10);
-    }
-    else if(clique == "baixo"){
+        if(clique == "baixo"){
         vaga_atual.second += 1;
         tone(buzzer,400,10);
     }
-    
+    }
     }
 
     void MoverCatalogo(){
@@ -185,40 +201,40 @@ class Display{
     String clique = "";
     if(vaga_atual.first < 14){
         clique = VerificarClick(button_right);
-    }
-
-    if(clique == "" && vaga_atual.first > 0){
-        clique = VerificarClick(button_left);
-    }
-
-    if(clique == "" && vaga_atual.second == 1){
-        clique = VerificarClick(button_top);
-    }
-
-    if(clique == "" && vaga_atual.second == 0){
-        clique = VerificarClick(button_bottom);
-    }
-
-    if(clique == "direita"){
+        if(clique == "direita"){
         vaga_atual.first += 2;
         letra_atual+=1;
         tone(buzzer,400,10);
     }
-    else if(clique == "esquerda"){
+    }
+
+    if(clique == "" && vaga_atual.first > 0){
+        clique = VerificarClick(button_left);
+        if(clique == "esquerda"){
         vaga_atual.first -= 2;
         letra_atual-=1;
         tone(buzzer,400,10);
     }
-    else if(clique == "cima"){
+    }
+
+    if(clique == "" && vaga_atual.second == 1){
+        clique = VerificarClick(button_top);
+        if(clique == "cima"){
         vaga_atual.second -= 1;
         letra_atual=letra_atual-8;
         tone(buzzer,400,10);
     }
-    else if(clique == "baixo"){
+    }
+
+    if(clique == "" && vaga_atual.second == 0){
+        clique = VerificarClick(button_bottom);
+        if(clique == "baixo"){
         vaga_atual.second += 1;
         letra_atual=letra_atual+8;
         tone(buzzer,400,10);
     }
+    }
+
     }
 
     String VerificarClick(int botao){
@@ -237,10 +253,6 @@ class Display{
     bool click_atual = digitalRead(botao);
 
     if(click_atual == HIGH && ultimo_estado[indice] == LOW){
-
-        if(millis() - ultimo_tempo[indice] >= tempo){
-
-            ultimo_tempo[indice] = millis();
             ultimo_estado[indice] = click_atual;
 
             switch(indice){
@@ -250,7 +262,7 @@ class Display{
                 case 3: return "baixo";
                 case 4: return "aceitar";
             }
-        }
+        
     }
 
     ultimo_estado[indice] = click_atual;
@@ -315,7 +327,8 @@ float Iniciar_ultra(){
 
 bool iniciarMatriz=false;
 Display display_lcd;
-vector<vector<int>> MatrizVagas(2, vector<int>(16,0));
+vector<vector<vector<int>>> MatrizVagas =
+        vector<vector<vector<int>>>(16, vector<vector<int>>(2, vector<int>(16, 0)));
 
 void setup() {
   
@@ -335,14 +348,13 @@ void setup() {
   lcd.begin(16,2);
 }
 void loop() {
-
-    float h_temp = sensor_dht.readHumidity();
-    float t_temp = sensor_dht.readTemperature();
-    float distancia = Iniciar_ultra();
+    
         switch(estado_atual){
 
-        case tela_padrao:
-
+        case tela_padrao:{
+            float h_temp = sensor_dht.readHumidity();
+            float t_temp = sensor_dht.readTemperature();
+            float distancia = Iniciar_ultra();
             if(!isnan(t_temp) && !isnan(h_temp)){
                 display_lcd.Tela_padrao(t_temp,h_temp);
             }
@@ -352,10 +364,10 @@ void loop() {
                 lcd.clear();
 
                 display_lcd.Saudacao_inicial(true);
-                delay(1000);
+                delay(2000);
                 estado_atual = saudacao;
             }
-
+        }
             break;
 
 
@@ -364,9 +376,11 @@ void loop() {
             lcd.clear();
 
             display_lcd.Saudacao_inicial(false);
-            delay(1000);
+            delay(2000);
             estado_atual = instrucao;
+            
             lcd.clear();
+            display_lcd.ResetarVaga(false);
             break;
 
 
@@ -376,6 +390,7 @@ void loop() {
             if(display_lcd.SelecionarCatalogo()){
                 lcd.clear();
                 estado_atual=vagas;
+                display_lcd.ResetarVaga(false);
             }else{
                  display_lcd.MostrarCatalogo(MatrizVagas);
                 display_lcd.MoverCatalogo();
@@ -389,6 +404,7 @@ void loop() {
                 estado_atual=verificar_escolha;
                 lcd.clear();
                 display_lcd.VerificarEscolha();
+                display_lcd.ResetarVaga(true);
                 delay(3000);
                 lcd.clear();
             }
@@ -396,12 +412,12 @@ void loop() {
         case verificar_escolha:
             if(display_lcd.MostrarOpcao()){
                 estado_atual=tela_padrao;
+                display_lcd.ResetarVaga(false);
                 display_lcd.SaudacaoFinal();
                 delay(2500);
             }else{
                 display_lcd.MoverOpcao();
             }
-            
             
             break;
 
