@@ -97,10 +97,9 @@ class Display{
         
     }
 
-    bool SelecionarVagas(vector<vector<vector<int>>> &vagas){
+    bool SelecionarVagas(){
         String click = VerificarClick(button_aceitar);
         if(click=="aceitar"){
-                vagas[letra_atual-'A'][vaga_atual.second][vaga_atual.first]=1;
                 return true;
             }
             
@@ -147,16 +146,27 @@ class Display{
         }
     }
 
-    bool MostrarOpcao(){
-        String click=VerificarClick(button_aceitar);
-        lcd.setCursor(0,0);
-        lcd.print("Sim");
-        lcd.setCursor(0,1);
-        lcd.print("Nao");
-        if(click=="aceitar" && vaga_atual.second==0){
-            return true;
+    String AceitarVaga(vector<vector<vector<int>>> &vagas){
+        if(vaga_atual.second==0){
+            lcd.setCursor(0,0);
+            lcd.print("Sim<");
+            lcd.setCursor(0,1);
+            lcd.print("Nao ");
+        }else{
+            lcd.setCursor(0,0);
+            lcd.print("Sim ");
+            lcd.setCursor(0,1);
+            lcd.print("Nao<");
         }
-        return false;
+        String click=VerificarClick(button_aceitar);
+        if(click=="aceitar" && vaga_atual.second==0){
+            vagas[letra_atual-'A'][vaga_atual.second][vaga_atual.first]=1;
+            return "sim";
+        }else if(click=="aceitar" && vaga_atual.second==1){
+            return "nao";
+        }
+        return "";
+        
         
     }
 
@@ -301,9 +311,7 @@ class Display{
 enum Estados{
     tela_padrao,
     saudacao,
-    instrucao,
-    catalogo,
-    vaga_selecionada,
+    catalogos,
     vagas,
     verificar_escolha
 };
@@ -377,14 +385,14 @@ void loop() {
 
             display_lcd.Saudacao_inicial(false);
             delay(2000);
-            estado_atual = instrucao;
+            estado_atual = catalogos;
             
             lcd.clear();
             display_lcd.ResetarVaga(false);
             break;
 
 
-        case instrucao:
+        case catalogos:
 
             
             if(display_lcd.SelecionarCatalogo()){
@@ -400,7 +408,7 @@ void loop() {
         case vagas:
             display_lcd.MostrarVagas(MatrizVagas);
             display_lcd.MoverVaga();
-            if(display_lcd.SelecionarVagas(MatrizVagas)){
+            if(display_lcd.SelecionarVagas()){
                 estado_atual=verificar_escolha;
                 lcd.clear();
                 display_lcd.VerificarEscolha();
@@ -410,12 +418,18 @@ void loop() {
             }
             break;
         case verificar_escolha:
-            if(display_lcd.MostrarOpcao()){
+            String escolha =display_lcd.AceitarVaga(MatrizVagas);
+            if(escolha=="sim"){
                 estado_atual=tela_padrao;
                 display_lcd.ResetarVaga(false);
                 display_lcd.SaudacaoFinal();
                 delay(2500);
-            }else{
+            }else if(escolha=="nao"){
+                estado_atual=catalogos;
+                display_lcd.ResetarVaga(true);
+                lcd.clear();
+            }
+            else{
                 display_lcd.MoverOpcao();
             }
             
